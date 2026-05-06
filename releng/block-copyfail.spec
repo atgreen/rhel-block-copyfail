@@ -45,6 +45,9 @@ install -D -m 0644 block-copyfail.service %{buildroot}%{_unitdir}/block-copyfail
 
 %post
 %systemd_post block-copyfail.service
+if [ $1 -eq 1 ]; then
+    systemctl enable --now block-copyfail.service >/dev/null 2>&1 || :
+fi
 
 %preun
 %systemd_preun block-copyfail.service
