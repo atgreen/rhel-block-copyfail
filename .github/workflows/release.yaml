@@ -40,6 +40,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Enable CRB repository
+        run: dnf install -y 'dnf-command(config-manager)' && dnf config-manager --set-enabled crb
+
       - name: Install build dependencies
         run: |
           dnf install -y rpm-build rpmdevtools rpm-sign \
