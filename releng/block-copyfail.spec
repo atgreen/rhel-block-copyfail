@@ -3,7 +3,7 @@ Version:        0.1.0
 Release:        1%{?dist}
 Summary:        BPF LSM blocker for CVE-2026-31431 (Copy Fail)
 
-License:        Apache-2.0
+License:        Apache-2.0 AND GPL-2.0-only
 URL:            https://github.com/atgreen/rhel-block-copyfail
 
 %global debug_package %{nil}
@@ -36,7 +36,8 @@ preventing exploitation via crypto template nesting. Other AF_ALG usage
 %autosetup
 
 %build
-make %{?_smp_mflags}
+# BPF_CFLAGS are hardcoded (clang -target bpf); RPM flags apply to userspace only
+make %{?_smp_mflags} CFLAGS="%{optflags}" LDFLAGS="%{build_ldflags}"
 
 %install
 install -D -m 0755 block-copyfail %{buildroot}%{_sbindir}/block-copyfail
@@ -49,7 +50,8 @@ install -D -m 0644 block-copyfail.service %{buildroot}%{_unitdir}/block-copyfail
 %systemd_preun block-copyfail.service
 
 %postun
-%systemd_postun_with_restart block-copyfail.service
+# No automatic restart — avoid an unprotected window during upgrades
+%systemd_postun block-copyfail.service
 
 %files
 %license LICENSE
@@ -58,5 +60,5 @@ install -D -m 0644 block-copyfail.service %{buildroot}%{_unitdir}/block-copyfail
 %{_unitdir}/block-copyfail.service
 
 %changelog
-* Tue May 06 2025 Anthony Green <green@moxielogic.com> - 0.1.0-1
+* Tue May 06 2026 Anthony Green <green@moxielogic.com> - 0.1.0-1
 - Initial RPM package
