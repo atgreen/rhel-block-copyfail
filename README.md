@@ -1,16 +1,25 @@
 ## block-copyfail
 
-BPF LSM blocker for **CVE-2026-31431** ("Copy Fail"), a Linux kernel privilege
-escalation vulnerability in the `algif_aead` cryptographic interface.
+**Zero-reboot** mitigation for **CVE-2026-31431** ("Copy Fail"), a Linux kernel
+privilege escalation vulnerability in the `algif_aead` cryptographic interface.
 
-Installs as a systemd service that loads a BPF LSM program to block all AF_ALG
-AEAD socket binds — the subsystem exploited by Copy Fail. Other AF_ALG usage
-(hash, skcipher, rng) is unaffected.
+If you can reboot, the simplest fix is to blacklist the module:
+
+```bash
+echo "blacklist algif_aead" | sudo tee /etc/modprobe.d/block-copyfail.conf
+sudo reboot
+```
+
+This package is for systems that **cannot be rebooted** — production servers,
+long-running workloads, etc. It installs a BPF LSM program as a systemd service
+that blocks all AF_ALG AEAD socket binds at runtime, without a reboot. Other
+AF_ALG usage (hash, skcipher, rng) is unaffected.
 
 ## Install
 
 RPM packages are available for RHEL 9 and RHEL 10 (and compatible distros like
-CentOS Stream, AlmaLinux, Rocky Linux).
+CentOS Stream, AlmaLinux, Rocky Linux). BPF LSM must be enabled in the kernel
+(RHEL 9.8+ and RHEL 10 have it by default).
 
 ```bash
 sudo dnf config-manager --add-repo \
@@ -22,28 +31,8 @@ sudo systemctl enable --now block-copyfail
 ## Verify
 
 ```bash
-# Check the service is running
 systemctl status block-copyfail
-
-# Watch for blocked attempts
 journalctl -u block-copyfail -f
-```
-
-## Prerequisites
-
-BPF LSM must be enabled in the kernel. RHEL 9.8+ and RHEL 10 have it enabled
-by default. Verify with:
-
-```bash
-cat /sys/kernel/security/lsm
-# Must contain "bpf"
-```
-
-If `bpf` is not listed, add the kernel parameter and reboot:
-
-```bash
-sudo grubby --update-kernel=ALL --args="lsm=lockdown,capability,selinux,bpf"
-sudo reboot
 ```
 
 ## How it works
@@ -65,7 +54,6 @@ The BPF program detaches automatically when the service stops. No reboot needed.
 ## Building from source
 
 ```bash
-# Build dependencies (RHEL/CentOS)
 sudo dnf install clang llvm bpftool libbpf-devel elfutils-libelf-devel \
   zlib-devel gcc make pkgconfig
 
