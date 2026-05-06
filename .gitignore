@@ -1,0 +1,4 @@
+block-copyfail
+block_copyfail.bpf.o
+block_copyfail.skel.h
+*.rpm

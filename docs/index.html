@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>block-copyfail</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; max-width: 700px; margin: 2em auto; padding: 0 1em; line-height: 1.6; color: #24292f; }
+    h1 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
+    code, pre { background: #f6f8fa; border-radius: 6px; font-size: 0.9em; }
+    pre { padding: 1em; overflow-x: auto; }
+    code { padding: 0.2em 0.4em; }
+    a { color: #0969da; }
+  </style>
+</head>
+<body>
+  <h1>block-copyfail</h1>
+  <p>BPF LSM blocker for <strong>CVE-2026-31431</strong> ("Copy Fail") &mdash; a zero-reboot mitigation
+  that blocks all AF_ALG AEAD socket binds on RHEL systems.</p>
+
+  <h2>Install (RHEL 9 / RHEL 10)</h2>
+  <pre>sudo dnf config-manager --add-repo https://atgreen.github.io/rhel-block-copyfail/rpm-repo/block-copyfail.repo
+sudo dnf install block-copyfail
+sudo systemctl enable --now block-copyfail</pre>
+
+  <h2>Verify</h2>
+  <pre>systemctl status block-copyfail
+journalctl -u block-copyfail -f</pre>
+
+  <p>Source: <a href="https://github.com/atgreen/rhel-block-copyfail">github.com/atgreen/rhel-block-copyfail</a></p>
+</body>
+</html>
