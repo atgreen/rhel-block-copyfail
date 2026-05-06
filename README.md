@@ -1,7 +1,13 @@
 ## block-copyfail
 
+> **Unofficial and only lightly tested.** Use at your own risk.
+
 **Zero-reboot** mitigation for **CVE-2026-31431** ("Copy Fail"), a Linux kernel
 privilege escalation vulnerability in the `algif_aead` cryptographic interface.
+
+Based on [openshift/block-copyfail](https://github.com/openshift/block-copyfail),
+which in turn was based on [atgreen/block-copyfail](https://github.com/atgreen/block-copyfail).
+This repo repackages it as RPMs with a systemd service for standalone RHEL systems.
 
 If you can reboot, the simplest fix is to blacklist the module:
 
