@@ -14,8 +14,12 @@
 </head>
 <body>
   <h1>block-copyfail</h1>
+  <p><em><strong>Unofficial and only lightly tested.</strong> Use at your own risk.</em></p>
   <p>BPF LSM blocker for <strong>CVE-2026-31431</strong> ("Copy Fail") &mdash; a zero-reboot mitigation
   that blocks all AF_ALG AEAD socket binds on RHEL systems.</p>
+  <p>Based on <a href="https://github.com/openshift/block-copyfail">openshift/block-copyfail</a>,
+  which in turn was based on <a href="https://github.com/atgreen/block-copyfail">atgreen/block-copyfail</a>.
+  This repo repackages it as RPMs with a systemd service for standalone RHEL systems.</p>
 
   <h2>Install (RHEL 9 / RHEL 10)</h2>
   <pre>sudo dnf config-manager --add-repo https://atgreen.github.io/rhel-block-copyfail/rpm-repo/block-copyfail.repo
