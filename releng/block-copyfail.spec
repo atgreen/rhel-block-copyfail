@@ -5,6 +5,8 @@ Summary:        BPF LSM blocker for CVE-2026-31431 (Copy Fail)
 
 License:        Apache-2.0
 URL:            https://github.com/atgreen/rhel-block-copyfail
+
+%global debug_package %{nil}
 Source0:        block-copyfail-%{version}.tar.gz
 
 BuildRequires:  clang
