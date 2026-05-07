@@ -19,7 +19,7 @@
   vulnerabilities (CVE-2026-31431 and Copy Fail 2) on RHEL systems.</p>
   <ul>
     <li><strong>Copy Fail 1</strong> (all packages): blocks AF_ALG AEAD socket binds</li>
-    <li><strong>Copy Fail 2</strong> (RHEL 10 / Fedora): blocks MSG_SPLICE_PAGES on ESP-in-UDP sockets</li>
+    <li><strong>Copy Fail 2</strong> (RHEL 10 / Fedora): blocks splice-based zero-copy sends on UDP sockets</li>
   </ul>
   <p>Based on <a href="https://github.com/openshift/block-copyfail">openshift/block-copyfail</a>,
   which in turn was based on <a href="https://github.com/atgreen/block-copyfail">atgreen/block-copyfail</a>.

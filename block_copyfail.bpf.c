@@ -7,9 +7,12 @@
  * (hash, skcipher, rng) is unaffected.
  *
  * Copy Fail 2 (BLOCK_CF2, RHEL 10 only): hooks socket_sendmsg and blocks
- * MSG_SPLICE_PAGES sends on ESP-in-UDP sockets.  The vulnerability uses
- * xfrm ESP-in-UDP with MSG_SPLICE_PAGES to get a no-COW page-cache write.
- * Normal IPsec traffic (non-splice sends) is unaffected.
+ * MSG_SPLICE_PAGES sends on UDP sockets.  The exploit splices a target
+ * file's page-cache pages into a plain UDP socket (no copy), then an
+ * ESP-in-UDP receiver decrypts in-place, corrupting the shared pages.
+ * We block splice-to-UDP entirely since the sending socket has no ESP
+ * encap set — only the receiver does.  Normal (non-splice) UDP sends
+ * and all receives are unaffected.
  */
 
 #include <linux/types.h>
@@ -33,10 +36,6 @@ struct sock {
 	__u8 sk_protocol;
 } __attribute__((preserve_access_index));
 
-struct udp_sock {
-	__u8 encap_type;
-} __attribute__((preserve_access_index));
-
 struct socket {
 	short type;
 	struct sock *sk;
@@ -53,8 +52,6 @@ struct sockaddr;
 #define SOCK_DGRAM 2
 #define IPPROTO_UDP 17
 #define MSG_SPLICE_PAGES       0x08000000
-#define UDP_ENCAP_ESPINUDP_NON_IKE 1
-#define UDP_ENCAP_ESPINUDP         2
 
 #else /* !BLOCK_CF2 */
 
@@ -125,19 +122,23 @@ int BPF_PROG(block_copyfail, struct socket *sock,
 }
 
 #ifdef BLOCK_CF2
-/* Copy Fail 2: block MSG_SPLICE_PAGES sends on ESP-in-UDP sockets.
+/* Copy Fail 2: block MSG_SPLICE_PAGES sends on UDP sockets.
  *
- * The exploit splices a target file's page into a pipe, then splices
- * that pipe into an ESP-in-UDP socket.  The kernel sets MSG_SPLICE_PAGES
- * on this path, and ESP decrypt-in-place corrupts the shared page cache.
- * Blocking this specific combination is the narrowest possible mitigation.
+ * The exploit splices a target file's page-cache pages into a pipe,
+ * then splices the pipe into a plain UDP socket.  The kernel sends
+ * with MSG_SPLICE_PAGES (zero-copy, shared pages).  An ESP-in-UDP
+ * receiver on loopback decrypts in-place, corrupting the shared
+ * page cache.  The sending socket has no ESP encap — only the
+ * receiver does — so we block splice-to-UDP entirely.
+ *
+ * Normal sendmsg/write to UDP sockets is unaffected (those copy).
+ * Splice-to-UDP is extremely uncommon in practice.
  */
 SEC("lsm/socket_sendmsg")
 int BPF_PROG(block_copyfail2, struct socket *sock,
 	     struct msghdr *msg, int size, int ret)
 {
 	struct sock *sk;
-	struct udp_sock *usk;
 
 	if (ret)
 		return ret;
@@ -157,12 +158,6 @@ int BPF_PROG(block_copyfail2, struct socket *sock,
 		return 0;
 
 	if (BPF_CORE_READ(sk, sk_protocol) != IPPROTO_UDP)
-		return 0;
-
-	usk = (struct udp_sock *)sk;
-	__u8 encap = BPF_CORE_READ(usk, encap_type);
-	if (encap != UDP_ENCAP_ESPINUDP &&
-	    encap != UDP_ENCAP_ESPINUDP_NON_IKE)
 		return 0;
 
 	emit_block_event(BLOCK_HOOK_CF2);

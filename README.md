@@ -52,9 +52,12 @@ AEAD bind, preventing exploitation regardless of crypto template nesting
 
 **Copy Fail 2** (RHEL 10 / Fedora only): uses xfrm ESP-in-UDP with
 `MSG_SPLICE_PAGES` to achieve the same page-cache write via a different
-subsystem. The BPF LSM program hooks `socket_sendmsg` and blocks
-splice-based zero-copy sends on ESP-in-UDP sockets. Normal IPsec traffic
-is unaffected.
+subsystem. The exploit splices shared page-cache pages into a plain UDP
+socket; an ESP-in-UDP receiver then decrypts in-place, corrupting the
+shared pages. The BPF LSM program hooks `socket_sendmsg` and blocks all
+splice-based zero-copy sends on UDP sockets (the sending socket has no
+ESP encap, so only the broader check works). Normal `sendmsg`/`write`
+to UDP is unaffected.
 
 ## Removal
 
