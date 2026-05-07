@@ -64,8 +64,7 @@ fi
 %systemd_preun block-copyfail.service
 
 %postun
-# No automatic restart — avoid an unprotected window during upgrades
-%systemd_postun block-copyfail.service
+%systemd_postun_with_restart block-copyfail.service
 
 %files
 %license LICENSE
