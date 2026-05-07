@@ -9,7 +9,8 @@ BPF_CFLAGS := -target bpf -D__TARGET_ARCH_$(ARCH) -O2 -g \
 	$(EXTRA_BPF_CFLAGS) \
 	$(shell pkg-config --cflags libbpf 2>/dev/null)
 
-CFLAGS  ?= -O2 -Wall -Werror $(EXTRA_CFLAGS)
+CFLAGS  ?= -O2 -Wall -Werror
+override CFLAGS += $(EXTRA_CFLAGS)
 LDLIBS  := $(shell pkg-config --libs libbpf 2>/dev/null || echo "-lbpf -lelf -lz")
 
 .PHONY: all clean
