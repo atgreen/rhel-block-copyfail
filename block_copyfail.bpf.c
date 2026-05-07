@@ -33,7 +33,7 @@ struct sock_common {
 
 struct sock {
 	struct sock_common __sk_common;
-	__u8 sk_protocol;
+	__u16 sk_protocol;
 } __attribute__((preserve_access_index));
 
 struct socket {
