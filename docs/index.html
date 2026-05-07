@@ -14,7 +14,15 @@
 </head>
 <body>
   <h1>block-copyfail</h1>
-  <p><em><strong>Unofficial and only lightly tested.</strong> Use at your own risk.</em></p>
+  <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 1em; margin-bottom: 1em;">
+    <strong>WARNING:</strong> This is experimental, unofficial software. It is not endorsed by
+    or affiliated with Red Hat. It has not been thoroughly tested and may not function
+    correctly. Running BPF LSM programs that intercept kernel operations carries inherent
+    risk, including the possibility of blocking legitimate workloads, causing application
+    failures, or degrading system stability. <strong>Use at your own risk</strong> and test
+    in a non-production environment first. The authors accept no liability for any damage
+    caused by this software.
+  </div>
   <p>Zero-reboot BPF LSM mitigation for <strong>Copy Fail</strong> kernel privilege escalation
   vulnerabilities (CVE-2026-31431 and Copy Fail 2) on RHEL systems.</p>
   <ul>

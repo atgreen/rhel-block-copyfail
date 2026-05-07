@@ -1,6 +1,14 @@
 ## block-copyfail
 
-> **Unofficial and only lightly tested.** Use at your own risk.
+> **WARNING: This is experimental, unofficial software. It is not
+> endorsed by or affiliated with Red Hat. It has not been thoroughly
+> tested and may not function correctly. Running BPF LSM programs
+> that intercept kernel operations carries inherent risk, including
+> the possibility of blocking legitimate workloads, causing
+> application failures, or degrading system stability. Use at your
+> own risk and test in a non-production environment first. The
+> authors accept no liability for any damage caused by this
+> software.**
 
 **Zero-reboot** mitigation for **Copy Fail** kernel privilege escalation
 vulnerabilities (CVE-2026-31431 and Copy Fail 2).
