@@ -2,8 +2,8 @@
 
 > **Unofficial and only lightly tested.** Use at your own risk.
 
-**Zero-reboot** mitigation for **CVE-2026-31431** ("Copy Fail"), a Linux kernel
-privilege escalation vulnerability in the `algif_aead` cryptographic interface.
+**Zero-reboot** mitigation for **Copy Fail** kernel privilege escalation
+vulnerabilities (CVE-2026-31431 and Copy Fail 2).
 
 Based on [openshift/block-copyfail](https://github.com/openshift/block-copyfail),
 which in turn was based on [atgreen/block-copyfail](https://github.com/atgreen/block-copyfail).
@@ -71,7 +71,8 @@ The BPF program detaches automatically when the service stops. No reboot needed.
 sudo dnf install clang llvm bpftool libbpf-devel elfutils-libelf-devel \
   zlib-devel gcc make pkgconfig
 
-make
+make                                          # Copy Fail 1 only
+make EXTRA_BPF_CFLAGS=-DBLOCK_CF2 EXTRA_CFLAGS=-DBLOCK_CF2  # + Copy Fail 2
 sudo install -m 0755 block-copyfail /usr/sbin/
 sudo install -m 0644 block-copyfail.service /usr/lib/systemd/system/
 sudo systemctl daemon-reload
