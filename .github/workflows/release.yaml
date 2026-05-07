@@ -23,6 +23,9 @@ jobs:
     strategy:
       matrix:
         include:
+          - distro: el8
+            image: almalinux:8
+            releasever: "8"
           - distro: stream9
             image: quay.io/centos/centos:stream9
             releasever: "9"
@@ -40,8 +43,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Enable CRB repository
-        run: dnf install -y 'dnf-command(config-manager)' && dnf config-manager --set-enabled crb
+      - name: Enable CRB/PowerTools repository
+        run: |
+          dnf install -y 'dnf-command(config-manager)'
+          dnf config-manager --set-enabled crb 2>/dev/null \
+            || dnf config-manager --set-enabled powertools 2>/dev/null \
+            || true
 
       - name: Install build dependencies
         run: |
@@ -148,6 +155,8 @@ jobs:
     strategy:
       matrix:
         include:
+          - distro: el8
+            releasever: "8"
           - distro: stream9
             releasever: "9"
           - distro: stream10
@@ -256,6 +265,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Download RPM repo artifacts (EL8)
+        uses: actions/download-artifact@v4
+        with:
+          name: rpm-repo-8
+          path: docs/rpm-repo/8/repodata
+
+      - name: Download RPM GPG key (EL8)
+        uses: actions/download-artifact@v4
+        with:
+          name: rpm-repo-key-8
+          path: docs/rpm-repo/8
+        continue-on-error: true
+
       - name: Download RPM repo artifacts (EL9)
         uses: actions/download-artifact@v4
         with:
@@ -284,6 +306,7 @@ jobs:
 
       - name: Copy shared repo file into each version dir
         run: |
+          cp docs/rpm-repo/block-copyfail.repo docs/rpm-repo/8/ || true
           cp docs/rpm-repo/block-copyfail.repo docs/rpm-repo/9/ || true
           cp docs/rpm-repo/block-copyfail.repo docs/rpm-repo/10/ || true
 

@@ -21,7 +21,7 @@
   which in turn was based on <a href="https://github.com/atgreen/block-copyfail">atgreen/block-copyfail</a>.
   This repo repackages it as RPMs with a systemd service for standalone RHEL systems.</p>
 
-  <h2>Install (RHEL 9 / RHEL 10)</h2>
+  <h2>Install (RHEL 8 / 9 / 10)</h2>
   <pre>sudo dnf config-manager --add-repo https://atgreen.github.io/rhel-block-copyfail/rpm-repo/block-copyfail.repo
 sudo dnf install block-copyfail
 sudo systemctl enable --now block-copyfail</pre>

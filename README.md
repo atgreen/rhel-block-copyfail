@@ -23,9 +23,10 @@ AF_ALG usage (hash, skcipher, rng) is unaffected.
 
 ## Install
 
-RPM packages are available for RHEL 9 and RHEL 10 (and compatible distros like
+RPM packages are available for RHEL 8, 9, and 10 (and compatible distros like
 CentOS Stream, AlmaLinux, Rocky Linux). BPF LSM must be enabled in the kernel
-(RHEL 9.8+ and RHEL 10 have it by default).
+(RHEL 8.5+, 9, and 10 have it by default). Note that BPF LSM on RHEL 8 is
+classified as Technology Preview by Red Hat.
 
 ```bash
 sudo dnf config-manager --add-repo \
