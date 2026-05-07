@@ -75,6 +75,7 @@ jobs:
         run: |
           cd ~/rpmbuild/SPECS
           rpmbuild -ba block-copyfail.spec
+          echo "=== RPM build macros: rhel=$(rpm --eval '%{?rhel}') fedora=$(rpm --eval '%{?fedora}') ==="
 
       - name: Sign RPMs
         env:

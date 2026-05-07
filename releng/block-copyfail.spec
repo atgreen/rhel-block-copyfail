@@ -7,6 +7,12 @@ License:        Apache-2.0 AND GPL-2.0-only
 URL:            https://github.com/atgreen/rhel-block-copyfail
 
 %global debug_package %{nil}
+
+%if 0%{?rhel} >= 10 || 0%{?fedora}
+%global with_cf2 1
+%global cf2_flags -DBLOCK_CF2
+%endif
+
 Source0:        block-copyfail-%{version}.tar.gz
 
 BuildRequires:  clang
@@ -30,8 +36,8 @@ vulnerabilities.
 
 Installs BPF LSM programs that block exploitation at runtime without a
 reboot. Copy Fail 1 (CVE-2026-31431) blocks AF_ALG AEAD socket binds.
-%if 0%{?rhel} >= 10 || 0%{?fedora}
-Copy Fail 2 blocks MSG_SPLICE_PAGES on ESP-in-UDP sockets.
+%if 0%{?with_cf2}
+Copy Fail 2 blocks splice-based zero-copy sends on UDP sockets.
 %endif
 Other AF_ALG usage (hash, skcipher, rng) and normal IPsec traffic are
 unaffected.
@@ -40,10 +46,7 @@ unaffected.
 %autosetup
 
 %build
-# BPF_CFLAGS are hardcoded (clang -target bpf); RPM flags apply to userspace only
-%if 0%{?rhel} >= 10 || 0%{?fedora}
-%global cf2_flags -DBLOCK_CF2
-%endif
+echo ">>> rhel=%{?rhel} fedora=%{?fedora} with_cf2=%{?with_cf2} cf2_flags=%{?cf2_flags}"
 make %{?_smp_mflags} CFLAGS="%{optflags}" LDFLAGS="%{build_ldflags}" \
   EXTRA_BPF_CFLAGS="%{?cf2_flags}" EXTRA_CFLAGS="%{?cf2_flags}"
 
