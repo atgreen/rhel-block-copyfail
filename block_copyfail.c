@@ -55,11 +55,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-#ifdef BLOCK_CF2
 	fprintf(stderr, "block-copyfail: blocker active — AF_ALG AEAD + UDP splice + AF_RXRPC blocked\n");
-#else
-	fprintf(stderr, "block-copyfail: blocker active — AF_ALG AEAD + AF_RXRPC blocked\n");
-#endif
 
 	rb = ring_buffer__new(bpf_map__fd(skel->maps.events),
 			      handle_event, NULL, NULL);

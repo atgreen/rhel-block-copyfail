@@ -6,11 +6,9 @@ ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/' | sed 's
 
 BPF_CFLAGS := -target bpf -D__TARGET_ARCH_$(ARCH) -O2 -g \
 	-Wall -Werror \
-	$(EXTRA_BPF_CFLAGS) \
 	$(shell pkg-config --cflags libbpf 2>/dev/null)
 
 CFLAGS  ?= -O2 -Wall -Werror
-override CFLAGS += $(EXTRA_CFLAGS)
 LDLIBS  := $(shell pkg-config --libs libbpf 2>/dev/null || echo "-lbpf -lelf -lz")
 
 .PHONY: all clean

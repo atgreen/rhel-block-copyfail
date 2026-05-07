@@ -8,11 +8,6 @@ URL:            https://github.com/atgreen/rhel-block-copyfail
 
 %global debug_package %{nil}
 
-%if 0%{?rhel} >= 10 || 0%{?fedora}
-%global with_cf2 1
-%global cf2_flags -DBLOCK_CF2
-%endif
-
 Source0:        block-copyfail-%{version}.tar.gz
 
 BuildRequires:  clang
@@ -35,20 +30,16 @@ Zero-reboot mitigation for Copy Fail kernel privilege escalation
 vulnerabilities.
 
 Installs BPF LSM programs that block exploitation at runtime without a
-reboot. Copy Fail 1 (CVE-2026-31431) blocks AF_ALG AEAD socket binds.
-%if 0%{?with_cf2}
-Copy Fail 2 blocks splice-based zero-copy sends on UDP sockets.
-%endif
-Other AF_ALG usage (hash, skcipher, rng) and normal IPsec traffic are
-unaffected.
+reboot. Blocks AF_ALG AEAD socket binds (Copy Fail 1), splice-based
+zero-copy sends on UDP sockets (Copy Fail 2 / Dirty Frag ESP path),
+and AF_RXRPC socket creation (Dirty Frag rxkad path). Other AF_ALG
+usage (hash, skcipher, rng) and normal IPsec traffic are unaffected.
 
 %prep
 %autosetup
 
 %build
-echo ">>> rhel=%{?rhel} fedora=%{?fedora} with_cf2=%{?with_cf2} cf2_flags=%{?cf2_flags}"
-make %{?_smp_mflags} CFLAGS="%{optflags}" LDFLAGS="%{build_ldflags}" \
-  EXTRA_BPF_CFLAGS="%{?cf2_flags}" EXTRA_CFLAGS="%{?cf2_flags}"
+make %{?_smp_mflags} CFLAGS="%{optflags}" LDFLAGS="%{build_ldflags}"
 
 %install
 install -D -m 0755 block-copyfail %{buildroot}%{_sbindir}/block-copyfail

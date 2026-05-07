@@ -6,13 +6,14 @@
  * AEAD type is the only bypass-proof approach.  Other AF_ALG usage
  * (hash, skcipher, rng) is unaffected.
  *
- * Copy Fail 2 (BLOCK_CF2, RHEL 10 only): hooks socket_sendmsg and blocks
+ * Copy Fail 2 / Dirty Frag (ESP path): hooks socket_sendmsg and blocks
  * MSG_SPLICE_PAGES sends on UDP sockets.  The exploit splices a target
  * file's page-cache pages into a plain UDP socket (no copy), then an
  * ESP-in-UDP receiver decrypts in-place, corrupting the shared pages.
  * We block splice-to-UDP entirely since the sending socket has no ESP
  * encap set — only the receiver does.  Normal (non-splice) UDP sends
- * and all receives are unaffected.
+ * and all receives are unaffected.  Red Hat backported MSG_SPLICE_PAGES
+ * to the RHEL 9 kernel, so this is needed on EL8/9/10.
  *
  * Dirty Frag (rxkad path): hooks socket_create and blocks AF_RXRPC
  * socket creation entirely.  The Dirty Frag exploit uses rxkad
@@ -26,10 +27,8 @@
 #include <linux/errno.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
-#include "block_copyfail.h"
-
-#ifdef BLOCK_CF2
 #include <bpf/bpf_core_read.h>
+#include "block_copyfail.h"
 
 /* CO-RE struct stubs — field names must match kernel BTF.
  * Actual offsets are relocated at load time by libbpf. */
@@ -57,14 +56,7 @@ struct sockaddr;
 #define AF_INET6 10
 #define SOCK_DGRAM 2
 #define IPPROTO_UDP 17
-#define MSG_SPLICE_PAGES       0x08000000
-
-#else /* !BLOCK_CF2 */
-
-struct socket;
-struct sockaddr;
-
-#endif /* BLOCK_CF2 */
+#define MSG_SPLICE_PAGES 0x08000000
 
 /* struct sockaddr_alg layout (from linux/if_alg.h):
  *   offset 0:  __u16  salg_family
@@ -150,8 +142,7 @@ int BPF_PROG(block_dirty_frag, int family, int type, int protocol,
 	return -EPERM;
 }
 
-#ifdef BLOCK_CF2
-/* Copy Fail 2: block MSG_SPLICE_PAGES sends on UDP sockets.
+/* Copy Fail 2 / Dirty Frag: block MSG_SPLICE_PAGES sends on UDP sockets.
  *
  * The exploit splices a target file's page-cache pages into a pipe,
  * then splices the pipe into a plain UDP socket.  The kernel sends
@@ -162,6 +153,9 @@ int BPF_PROG(block_dirty_frag, int family, int type, int protocol,
  *
  * Normal sendmsg/write to UDP sockets is unaffected (those copy).
  * Splice-to-UDP is extremely uncommon in practice.
+ *
+ * On kernels without MSG_SPLICE_PAGES (pre-6.5 upstream, but
+ * backported to RHEL 9), the hook is a harmless no-op.
  */
 SEC("lsm/socket_sendmsg")
 int BPF_PROG(block_copyfail2, struct socket *sock,
@@ -192,6 +186,5 @@ int BPF_PROG(block_copyfail2, struct socket *sock,
 	emit_block_event(BLOCK_HOOK_CF2);
 	return -EPERM;
 }
-#endif /* BLOCK_CF2 */
 
 char LICENSE[] SEC("license") = "GPL";

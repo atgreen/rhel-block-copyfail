@@ -23,7 +23,7 @@ RHEL systems.
 | Vulnerability | Hook | What's blocked | Packages |
 |---|---|---|---|
 | **Copy Fail 1** (CVE-2026-31431) | `socket_bind` | AF_ALG AEAD socket binds | All (EL8, EL9, EL10) |
-| **Copy Fail 2** | `socket_sendmsg` | `MSG_SPLICE_PAGES` on UDP sockets | EL10 / Fedora only |
+| **Copy Fail 2** / Dirty Frag ESP | `socket_sendmsg` | `MSG_SPLICE_PAGES` on UDP sockets | All (EL8, EL9, EL10) |
 | **Dirty Frag** (rxkad path) | `socket_create` | AF_RXRPC socket creation | All (EL8, EL9, EL10) |
 
 ### What's unaffected
@@ -36,9 +36,9 @@ RHEL systems.
 
 ### Known side effects
 
-The Copy Fail 2 mitigation (RHEL 10 / Fedora) blocks `splice()` into
-UDP sockets. This is an extremely niche operation (kernel support was
-only added in 6.5), but could affect:
+The Copy Fail 2 mitigation blocks `splice()` into UDP sockets. This is
+an extremely niche operation (added in upstream 6.5, backported to
+RHEL 9), but could affect:
 
 - QUIC implementations using kernel splice for zero-copy UDP sends
 - Custom high-performance UDP pipelines using splice
@@ -107,7 +107,9 @@ a target file's page-cache pages into a plain UDP socket (zero-copy, no
 data copied); an ESP-in-UDP receiver on loopback then decrypts in-place,
 corrupting the shared pages. Because the sending socket is plain UDP
 (only the receiver has ESP encap), we block `MSG_SPLICE_PAGES` on all
-UDP sockets. This requires CO-RE and is only enabled on RHEL 10 / Fedora.
+UDP sockets. Red Hat backported `MSG_SPLICE_PAGES` to the RHEL 9 kernel,
+so this protection is enabled on all platforms. On kernels without the
+feature (e.g. unpatched EL8), the hook is a harmless no-op.
 
 **Dirty Frag** chains the ESP path with an AF_RXRPC fallback. The rxkad
 authentication layer uses `pcbc(fcrypt)` to brute-force keys and modify
@@ -131,8 +133,7 @@ needed.
 sudo dnf install clang llvm bpftool libbpf-devel elfutils-libelf-devel \
   zlib-devel gcc make pkgconfig
 
-make                                          # CF1 + Dirty Frag
-make EXTRA_BPF_CFLAGS=-DBLOCK_CF2 EXTRA_CFLAGS=-DBLOCK_CF2  # + CF2
+make
 sudo install -m 0755 block-copyfail /usr/sbin/
 sudo install -m 0644 block-copyfail.service /usr/lib/systemd/system/
 sudo systemctl daemon-reload
