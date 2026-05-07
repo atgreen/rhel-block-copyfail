@@ -5,10 +5,12 @@
 #include <linux/types.h>
 #endif
 
-#define AF_ALG 38
+#define AF_ALG   38
+#define AF_RXRPC 33
 
 #define BLOCK_HOOK_CF1 1   /* AF_ALG AEAD bind (CVE-2026-31431) */
 #define BLOCK_HOOK_CF2 2   /* ESP-in-UDP splice (Copy Fail 2) */
+#define BLOCK_HOOK_DF  3   /* AF_RXRPC create (Dirty Frag rxkad path) */
 
 struct block_event {
 	__u32 pid;

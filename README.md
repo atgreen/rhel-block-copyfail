@@ -10,8 +10,8 @@
 > authors accept no liability for any damage caused by this
 > software.**
 
-**Zero-reboot** mitigation for **Copy Fail** kernel privilege escalation
-vulnerabilities (CVE-2026-31431 and Copy Fail 2).
+**Zero-reboot** mitigation for **Copy Fail** and **Dirty Frag** kernel
+privilege escalation vulnerabilities.
 
 Based on [openshift/block-copyfail](https://github.com/openshift/block-copyfail),
 which in turn was based on [atgreen/block-copyfail](https://github.com/atgreen/block-copyfail).
@@ -66,6 +66,13 @@ shared pages. The BPF LSM program hooks `socket_sendmsg` and blocks all
 splice-based zero-copy sends on UDP sockets (the sending socket has no
 ESP encap, so only the broader check works). Normal `sendmsg`/`write`
 to UDP is unaffected.
+
+**Dirty Frag** (rxkad path, all packages): the Dirty Frag exploit chains
+the ESP path above with an `AF_RXRPC` fallback that uses `rxkad`
+authentication with `pcbc(fcrypt)` to brute-force keys and modify
+page-cache contents in-place. The BPF LSM program hooks `socket_create`
+and blocks all `AF_RXRPC` socket creation. AFS/rxrpc is unused on
+nearly all production systems.
 
 ## Removal
 

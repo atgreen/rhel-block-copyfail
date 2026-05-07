@@ -1,4 +1,4 @@
-/* BPF LSM program to block Copy Fail vulnerabilities.
+/* BPF LSM program to block Copy Fail and Dirty Frag vulnerabilities.
  *
  * Copy Fail 1 (CVE-2026-31431): hooks socket_bind and blocks all AF_ALG
  * AEAD binds.  The vulnerability is in algif_aead, and authencesn can be
@@ -13,6 +13,12 @@
  * We block splice-to-UDP entirely since the sending socket has no ESP
  * encap set — only the receiver does.  Normal (non-splice) UDP sends
  * and all receives are unaffected.
+ *
+ * Dirty Frag (rxkad path): hooks socket_create and blocks AF_RXRPC
+ * socket creation entirely.  The Dirty Frag exploit uses rxkad
+ * authentication with pcbc(fcrypt) to brute-force keys and modify
+ * page-cache contents via AF_RXRPC.  AFS/rxrpc is unused on nearly
+ * all production systems.
  */
 
 #include <linux/types.h>
@@ -118,6 +124,29 @@ int BPF_PROG(block_copyfail, struct socket *sock,
 		return 0;
 
 	emit_block_event(BLOCK_HOOK_CF1);
+	return -EPERM;
+}
+
+/* Dirty Frag: block AF_RXRPC socket creation.
+ *
+ * The rxkad path uses AF_RXRPC with pcbc(fcrypt) to brute-force keys
+ * and modify page-cache contents in-place.  Block the entire address
+ * family — AFS/rxrpc is unused on nearly all production systems.
+ */
+SEC("lsm/socket_create")
+int BPF_PROG(block_dirty_frag, int family, int type, int protocol,
+	     int kern, int ret)
+{
+	if (ret)
+		return ret;
+
+	if (kern)
+		return 0;
+
+	if (family != AF_RXRPC)
+		return 0;
+
+	emit_block_event(BLOCK_HOOK_DF);
 	return -EPERM;
 }
 

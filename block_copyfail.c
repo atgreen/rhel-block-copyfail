@@ -20,6 +20,7 @@ static const char *hook_name(__u32 hook)
 	switch (hook) {
 	case BLOCK_HOOK_CF1: return "AF_ALG-AEAD";
 	case BLOCK_HOOK_CF2: return "ESP-UDP-splice";
+	case BLOCK_HOOK_DF:  return "AF_RXRPC";
 	default:             return "unknown";
 	}
 }
@@ -55,9 +56,9 @@ int main(int argc, char **argv)
 	}
 
 #ifdef BLOCK_CF2
-	fprintf(stderr, "block-copyfail: blocker active — AF_ALG AEAD binds + ESP-in-UDP splice blocked\n");
+	fprintf(stderr, "block-copyfail: blocker active — AF_ALG AEAD + UDP splice + AF_RXRPC blocked\n");
 #else
-	fprintf(stderr, "block-copyfail: blocker active — all AF_ALG AEAD binds blocked\n");
+	fprintf(stderr, "block-copyfail: blocker active — AF_ALG AEAD + AF_RXRPC blocked\n");
 #endif
 
 	rb = ring_buffer__new(bpf_map__fd(skel->maps.events),

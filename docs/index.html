@@ -23,11 +23,12 @@
     in a non-production environment first. The authors accept no liability for any damage
     caused by this software.
   </div>
-  <p>Zero-reboot BPF LSM mitigation for <strong>Copy Fail</strong> kernel privilege escalation
-  vulnerabilities (CVE-2026-31431 and Copy Fail 2) on RHEL systems.</p>
+  <p>Zero-reboot BPF LSM mitigation for <strong>Copy Fail</strong> and <strong>Dirty Frag</strong>
+  kernel privilege escalation vulnerabilities on RHEL systems.</p>
   <ul>
     <li><strong>Copy Fail 1</strong> (all packages): blocks AF_ALG AEAD socket binds</li>
     <li><strong>Copy Fail 2</strong> (RHEL 10 / Fedora): blocks splice-based zero-copy sends on UDP sockets</li>
+    <li><strong>Dirty Frag</strong> (all packages): blocks AF_RXRPC socket creation (rxkad path)</li>
   </ul>
   <p>Based on <a href="https://github.com/openshift/block-copyfail">openshift/block-copyfail</a>,
   which in turn was based on <a href="https://github.com/atgreen/block-copyfail">atgreen/block-copyfail</a>.
