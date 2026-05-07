@@ -25,19 +25,27 @@ Requires:       elfutils-libelf
 Requires:       zlib
 
 %description
-Zero-reboot mitigation for CVE-2026-31431 ("Copy Fail"), a Linux kernel
-privilege escalation vulnerability in the algif_aead cryptographic interface.
+Zero-reboot mitigation for Copy Fail kernel privilege escalation
+vulnerabilities.
 
-Installs a BPF LSM program that blocks all AF_ALG AEAD socket binds,
-preventing exploitation via crypto template nesting. Other AF_ALG usage
-(hash, skcipher, rng) is unaffected.
+Installs BPF LSM programs that block exploitation at runtime without a
+reboot. Copy Fail 1 (CVE-2026-31431) blocks AF_ALG AEAD socket binds.
+%if 0%{?rhel} >= 10 || 0%{?fedora}
+Copy Fail 2 blocks MSG_SPLICE_PAGES on ESP-in-UDP sockets.
+%endif
+Other AF_ALG usage (hash, skcipher, rng) and normal IPsec traffic are
+unaffected.
 
 %prep
 %autosetup
 
 %build
 # BPF_CFLAGS are hardcoded (clang -target bpf); RPM flags apply to userspace only
-make %{?_smp_mflags} CFLAGS="%{optflags}" LDFLAGS="%{build_ldflags}"
+%if 0%{?rhel} >= 10 || 0%{?fedora}
+%global cf2_flags -DBLOCK_CF2
+%endif
+make %{?_smp_mflags} CFLAGS="%{optflags}" LDFLAGS="%{build_ldflags}" \
+  EXTRA_BPF_CFLAGS="%{?cf2_flags}" EXTRA_CFLAGS="%{?cf2_flags}"
 
 %install
 install -D -m 0755 block-copyfail %{buildroot}%{_sbindir}/block-copyfail

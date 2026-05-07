@@ -44,10 +44,17 @@ journalctl -u block-copyfail -f
 
 ## How it works
 
-CVE-2026-31431 chains AF_ALG sockets with `authencesn` AEAD and `splice()` to
-corrupt arbitrary files in the kernel page cache. The BPF LSM program hooks
-`socket_bind` and returns `-EPERM` for any AF_ALG AEAD bind, preventing
-exploitation regardless of crypto template nesting (e.g. `pcrypt(authencesn(...))`).
+**Copy Fail 1** (CVE-2026-31431): chains AF_ALG sockets with `authencesn`
+AEAD and `splice()` to corrupt arbitrary files in the kernel page cache.
+The BPF LSM program hooks `socket_bind` and returns `-EPERM` for any AF_ALG
+AEAD bind, preventing exploitation regardless of crypto template nesting
+(e.g. `pcrypt(authencesn(...))`).
+
+**Copy Fail 2** (RHEL 10 / Fedora only): uses xfrm ESP-in-UDP with
+`MSG_SPLICE_PAGES` to achieve the same page-cache write via a different
+subsystem. The BPF LSM program hooks `socket_sendmsg` and blocks
+splice-based zero-copy sends on ESP-in-UDP sockets. Normal IPsec traffic
+is unaffected.
 
 ## Removal
 
