@@ -15,6 +15,12 @@
  * and all receives are unaffected.  Red Hat backported MSG_SPLICE_PAGES
  * to the RHEL 9 kernel, so this is needed on EL8/9/10.
  *
+ * On pre-6.5 kernels without MSG_SPLICE_PAGES, splice-to-socket uses
+ * the old sendpage path which bypasses socket_sendmsg entirely.  As a
+ * fallback, socket_setsockopt blocks setsockopt(SOL_UDP, UDP_ENCAP),
+ * preventing ESP-in-UDP receiver setup.  This is conditionally attached
+ * at runtime only when splice_to_socket is absent from kallsyms.
+ *
  * Dirty Frag (rxkad path): hooks socket_create and blocks AF_RXRPC
  * socket creation entirely.  The Dirty Frag exploit uses rxkad
  * authentication with pcbc(fcrypt) to brute-force keys and modify
@@ -56,6 +62,8 @@ struct sockaddr;
 #define AF_INET6 10
 #define SOCK_DGRAM 2
 #define IPPROTO_UDP 17
+#define SOL_UDP     17
+#define UDP_ENCAP  100
 #define MSG_SPLICE_PAGES 0x08000000
 
 /* struct sockaddr_alg layout (from linux/if_alg.h):
@@ -184,6 +192,30 @@ int BPF_PROG(block_copyfail2, struct socket *sock,
 		return 0;
 
 	emit_block_event(BLOCK_HOOK_CF2);
+	return -EPERM;
+}
+
+/* UDP_ENCAP setsockopt fallback for pre-6.5 kernels.
+ *
+ * On kernels without splice_to_socket (pre-6.5), splice-to-socket
+ * uses the old sendpage path which bypasses socket_sendmsg entirely.
+ * Block setsockopt(SOL_UDP, UDP_ENCAP) to prevent ESP-in-UDP receiver
+ * setup.  This is broader than the sendmsg hook (breaks all NAT-T
+ * IPsec, L2TP, etc.) but is only attached when needed.
+ *
+ * Conditionally attached at runtime — see has_splice_to_socket().
+ */
+SEC("lsm/socket_setsockopt")
+int BPF_PROG(block_udp_encap, struct socket *sock,
+	     int level, int optname, int ret)
+{
+	if (ret)
+		return ret;
+
+	if (level != SOL_UDP || optname != UDP_ENCAP)
+		return 0;
+
+	emit_block_event(BLOCK_HOOK_ENCAP);
 	return -EPERM;
 }
 
